@@ -725,7 +725,17 @@ static bool8 ShowPartyMenu(void)
         gMain.state++;
         break;
     case 20:
-        CreateTask(sPartyMenuInternal->task, 0);
+        CreateTask(sPartyMenuInternal->task, 0); // This creates the Task_HandleChooseMonInput
+
+        // --- START OF INFINITE CANDY FIX ---
+        // Explicitly re-assert gPartyMenu.action here after the task is created.
+        // This is a defensive measure to counteract any unintended resets.
+        if (gSpecialVar_ItemId == ITEM_INFINITE_CANDY)
+        {
+             gPartyMenu.action = PARTY_ACTION_USE_ITEM;
+        }
+        // --- END OF INFINITE CANDY FIX ---
+
         DisplayPartyMenuStdMessage(sPartyMenuInternal->messageId);
         gMain.state++;
         break;
@@ -5461,14 +5471,23 @@ static void Task_LearnedMove(u8 taskId)
 {
     struct Pokemon *mon = &gPlayerParty[gPartyMenu.slotId];
     s16 *move = &gPartyMenu.data1;
-    u16 item = gSpecialVar_ItemId;
+    u16 item = gSpecialVar_ItemId; // Ensure gSpecialVar_ItemId holds the item ID from item use
 
+    // This condition might be related to whether a move was newly learned (move[1] == 0) or overwritten (move[1] != 0).
+    // The key is that item consumption is often tied to this general learning step.
     if (move[1] == 0)
     {
         AdjustFriendship(mon, FRIENDSHIP_EVENT_LEARN_TMHM);
-        if (!GetItemImportance(item))
-            RemoveBagItem(item, 1);
+        
+        // --- START OF INFINITE CANDY FIX: Prevent item removal ---
+        if (item != ITEM_INFINITE_CANDY) // Only remove if it's NOT infinite candy
+        {
+            if (!GetItemImportance(item)) // Check if item is not important (like a TM that's consumed)
+                RemoveBagItem(item, 1);
+        }
+        // --- END OF INFINITE CANDY FIX ---
     }
+    
     GetMonNickname(mon, gStringVar1);
     StringCopy(gStringVar2, GetMoveName(move[0]));
     StringExpandPlaceholders(gStringVar4, gText_PkmnLearnedMove3);
@@ -5494,10 +5513,20 @@ static void Task_LearnNextMoveOrClosePartyMenu(u8 taskId)
         {
             Task_TryLearningNextMove(taskId);
         }
-        else
+        else // No more moves to learn, or gPartyMenu.learnMoveState is not 1
         {
             if (gPartyMenu.learnMoveState == 2) // never occurs
                 gSpecialVar_Result = TRUE;
+            
+            // --- START OF INFINITE CANDY FIX ---
+            // If it's Infinite Candy, ensure the Party Menu loops back to item use mode
+            if (gPartyMenu.action == PARTY_ACTION_USE_ITEM && gSpecialVar_ItemId == ITEM_INFINITE_CANDY)
+            {
+                gPartyMenuUseExitCallback = TRUE; // Force usage of gPartyMenu.exitCallback
+                // gPartyMenu.exitCallback should already be CB2_ShowPartyMenuForItemUse from InitPartyMenu
+            }
+            // --- END OF INFINITE CANDY FIX ---
+
             Task_ClosePartyMenu(taskId);
         }
     }
@@ -5726,6 +5755,94 @@ void ItemUseCB_RareCandy(u8 taskId, TaskFunc task)
                 StringExpandPlaceholders(gStringVar4, gText_PkmnElevatedToLvVar2);
             }
             else // Exp Candies
+            {
+                ConvertIntToDecimalStringN(gStringVar2, sExpCandyExperienceTable[holdEffectParam - 1], STR_CONV_MODE_LEFT_ALIGN, 6);
+                ConvertIntToDecimalStringN(gStringVar3, sFinalLevel, STR_CONV_MODE_LEFT_ALIGN, 3);
+                StringExpandPlaceholders(gStringVar4, gText_PkmnGainedExpAndElevatedToLvVar3);
+            }
+
+            DisplayPartyMenuMessage(gStringVar4, TRUE);
+            ScheduleBgCopyTilemapToVram(2);
+            gTasks[taskId].func = Task_DisplayLevelUpStatsPg1;
+        }
+        else
+        {
+            PlaySE(SE_USE_ITEM);
+            gPartyMenuUseExitCallback = FALSE;
+            ConvertIntToDecimalStringN(gStringVar2, sExpCandyExperienceTable[holdEffectParam - 1], STR_CONV_MODE_LEFT_ALIGN, 6);
+            StringExpandPlaceholders(gStringVar4, gText_PkmnGainedExp);
+            DisplayPartyMenuMessage(gStringVar4, FALSE);
+            ScheduleBgCopyTilemapToVram(2);
+            gTasks[taskId].func = task;
+        }
+    }
+}
+
+void ItemUseCB_InfiniteCandy(u8 taskId, TaskFunc task)
+{
+    struct Pokemon *mon = &gPlayerParty[gPartyMenu.slotId];
+    struct PartyMenuInternal *ptr = sPartyMenuInternal;
+    s16 *arrayPtr = ptr->data;
+    u16 *itemPtr = &gSpecialVar_ItemId;
+    bool8 cannotUseEffect;
+    u8 holdEffectParam = GetItemHoldEffectParam(*itemPtr);
+
+    sInitialLevel = GetMonData(mon, MON_DATA_LEVEL);
+    if (!(B_RARE_CANDY_CAP && sInitialLevel >= GetCurrentLevelCap()))
+    {
+        BufferMonStatsToTaskData(mon, arrayPtr);
+        cannotUseEffect = ExecuteTableBasedItemEffect(mon, *itemPtr, gPartyMenu.slotId, 0);
+        BufferMonStatsToTaskData(mon, &ptr->data[NUM_STATS]);
+    }
+    else
+    {
+        cannotUseEffect = TRUE;
+    }
+    PlaySE(SE_SELECT);
+    if (cannotUseEffect)
+    {
+        u32 targetSpecies = SPECIES_NONE;
+        bool32 canStopEvo = TRUE;
+
+        sInitialLevel = 0;
+        sFinalLevel = 0;
+
+        if (holdEffectParam == 0)
+        {
+            targetSpecies = GetEvolutionTargetSpecies(mon, EVO_MODE_NORMAL, ITEM_NONE, NULL, &canStopEvo, CHECK_EVO);
+        }
+
+        if (targetSpecies != SPECIES_NONE)
+        {
+            GetEvolutionTargetSpecies(mon, EVO_MODE_NORMAL, ITEM_NONE, NULL, &canStopEvo, DO_EVO);
+            FreePartyPointers();
+            gCB2_AfterEvolution = gPartyMenu.exitCallback;
+            BeginEvolutionScene(mon, targetSpecies, canStopEvo, gPartyMenu.slotId);
+            DestroyTask(taskId);
+        }
+        else
+        {
+            gPartyMenuUseExitCallback = FALSE;
+            DisplayPartyMenuMessage(gText_WontHaveEffect, TRUE);
+            ScheduleBgCopyTilemapToVram(2);
+            gTasks[taskId].func = task;
+        }
+    }
+    else
+    {
+        sFinalLevel = GetMonData(mon, MON_DATA_LEVEL, NULL);
+        gPartyMenuUseExitCallback = TRUE;
+        UpdateMonDisplayInfoAfterRareCandy(gPartyMenu.slotId, mon);
+        GetMonNickname(mon, gStringVar1);
+        if (sFinalLevel > sInitialLevel)
+        {
+            PlayFanfareByFanfareNum(FANFARE_LEVEL_UP);
+            if (holdEffectParam == 0)
+            {
+                ConvertIntToDecimalStringN(gStringVar2, sFinalLevel, STR_CONV_MODE_LEFT_ALIGN, 3);
+                StringExpandPlaceholders(gStringVar4, gText_PkmnElevatedToLvVar2);
+            }
+            else
             {
                 ConvertIntToDecimalStringN(gStringVar2, sExpCandyExperienceTable[holdEffectParam - 1], STR_CONV_MODE_LEFT_ALIGN, 6);
                 ConvertIntToDecimalStringN(gStringVar3, sFinalLevel, STR_CONV_MODE_LEFT_ALIGN, 3);
