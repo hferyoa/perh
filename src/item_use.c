@@ -755,7 +755,7 @@ void ItemUseOutOfBattle_InfiniteRepel(u8 taskId)
             DisplayItemMessageOnField(taskId, gText_InfiniteRepelOff, Task_CloseCantUseKeyItemMessage);
         }
         else{
-            DisplayItemMessage(taskId, 1, gText_InfiniteRepelOn, CloseItemMessage);
+            DisplayItemMessage(taskId, 1, gText_InfiniteRepelOff, CloseItemMessage);
         }
     }
 }
@@ -914,6 +914,12 @@ void ItemUseOutOfBattle_DynamaxCandy(u8 taskId)
 {
     gItemUseCB = ItemUseCB_DynamaxCandy;
     SetUpItemUseCallback(taskId);
+}
+
+void ItemUseOutOfBattle_Axe(u8 taskId)
+{
+    gItemUseCB = ItemUseCB_Axe;
+    SetUpItemUseCallback(taskId)
 }
 
 void ItemUseOutOfBattle_TMHM(u8 taskId)
