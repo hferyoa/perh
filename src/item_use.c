@@ -916,11 +916,11 @@ void ItemUseOutOfBattle_DynamaxCandy(u8 taskId)
     SetUpItemUseCallback(taskId);
 }
 
-void ItemUseOutOfBattle_Axe(u8 taskId)
-{
-    gItemUseCB = ItemUseCB_Axe;
-    SetUpItemUseCallback(taskId)
-}
+// void ItemUseOutOfBattle_Axe(u8 taskId)
+// {
+//     gItemUseCB = ItemUseCB_Axe;
+//     SetUpItemUseCallback(taskId)
+// }
 
 void ItemUseOutOfBattle_TMHM(u8 taskId)
 {

@@ -60,3 +60,54 @@ OldaleTown_PokemonCenter_1F_Text_TradedInWirelessClub:
 	.string "the second floor was built recently.\p"
 	.string "I traded POKéMON right away.$"
 
+OldaleTown_PokemonCenter_1F_EventScript_WeaknessTrader::
+	lock
+	faceplayer
+	checkflag FLAG_WEAKNESS_TRADE_DONE
+	goto_if_set OldaleTown_PokemonCenter_1F_EventScript_WeaknessTrader_Done
+	special WeaknessTradeSearch
+	compare VAR_RESULT, FALSE
+	goto_if_eq OldaleTown_PokemonCenter_1F_EventScript_WeaknessTrader_NoMatch
+	msgbox OldaleTown_PokemonCenter_1F_Text_WeaknessTrader_Offer, MSGBOX_YESNO
+	compare VAR_RESULT, NO
+	goto_if_eq OldaleTown_PokemonCenter_1F_EventScript_WeaknessTrader_Declined
+	special WeaknessTradeExecute
+	setflag FLAG_WEAKNESS_TRADE_DONE
+	msgbox OldaleTown_PokemonCenter_1F_Text_WeaknessTrader_Done, MSGBOX_DEFAULT
+	release
+	end
+
+OldaleTown_PokemonCenter_1F_EventScript_WeaknessTrader_Done::
+	msgbox OldaleTown_PokemonCenter_1F_Text_WeaknessTrader_AlreadyDone, MSGBOX_NPC
+	end
+
+OldaleTown_PokemonCenter_1F_EventScript_WeaknessTrader_NoMatch::
+	msgbox OldaleTown_PokemonCenter_1F_Text_WeaknessTrader_NoMatch, MSGBOX_DEFAULT
+	release
+	end
+
+OldaleTown_PokemonCenter_1F_EventScript_WeaknessTrader_Declined::
+	msgbox OldaleTown_PokemonCenter_1F_Text_WeaknessTrader_Declined, MSGBOX_DEFAULT
+	release
+	end
+
+OldaleTown_PokemonCenter_1F_Text_WeaknessTrader_Offer:
+	.string "Oh! You have a {STR_VAR_1}!\p"
+	.string "I could trade you a {STR_VAR_2}\n"
+	.string "for it. Will that do?$"
+
+OldaleTown_PokemonCenter_1F_Text_WeaknessTrader_Done:
+	.string "Enjoy your new {STR_VAR_2}!$"
+
+OldaleTown_PokemonCenter_1F_Text_WeaknessTrader_AlreadyDone:
+	.string "We already made a trade.\n"
+	.string "I hope your new POKéMON\l"
+	.string "is treating you well!$"
+
+OldaleTown_PokemonCenter_1F_Text_WeaknessTrader_NoMatch:
+	.string "Hmm... I don't have anything\n"
+	.string "that would suit you right now.$"
+
+OldaleTown_PokemonCenter_1F_Text_WeaknessTrader_Declined:
+	.string "No rush! Come back if you\n"
+	.string "change your mind.$"
