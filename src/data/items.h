@@ -14180,19 +14180,4 @@ const struct Item gItemsInfo[] =
         .iconPic = gItemIcon_RareCandy,
         .iconPalette = gItemIconPalette_RareCandy,
     },
-
-    // [ITEM_PHYLLO_STONE] =
-    // {
-    //     .name         = _("Phyllo Stone"),
-    //     .pluralName   = _("Phyllo Stones"),
-    //     .price        = 0,
-    //     .description  = sPhylloStoneDesc,
-    //     .pocket       = POCKET_KEY_ITEMS,
-    //     .importance   = 1,
-    //     .type         = ITEM_USE_BAG_MENU,   // used directly from bag, no party screen
-    //     .fieldUseFunc = ItemUseOutOfBattle_PhylloStone,
-    //     .battleUsage  = 0,
-    //     .iconPic      = gItemIcon_PrettyFeather,   // swap for your own graphic
-    //     .iconPalette  = gItemIconPalette_PrettyFeather,
-    // },
 };
