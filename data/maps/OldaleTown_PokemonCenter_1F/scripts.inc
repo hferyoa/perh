@@ -64,7 +64,7 @@ OldaleTown_PokemonCenter_1F_EventScript_WeaknessTrader::
 	lock
 	faceplayer
 	checkflag FLAG_WEAKNESS_TRADE_DONE
-	goto_if_set OldaleTown_PokemonCenter_1F_EventScript_WeaknessTrader_Done
+	goto_if TRUE, OldaleTown_PokemonCenter_1F_EventScript_WeaknessTrader_Done
 	special WeaknessTradeSearch
 	compare VAR_RESULT, FALSE
 	goto_if_eq OldaleTown_PokemonCenter_1F_EventScript_WeaknessTrader_NoMatch
@@ -91,23 +91,23 @@ OldaleTown_PokemonCenter_1F_EventScript_WeaknessTrader_Declined::
 	release
 	end
 
-OldaleTown_PokemonCenter_1F_Text_WeaknessTrader_Offer:
+OldaleTown_PokemonCenter_1F_Text_WeaknessTrader_Offer::
 	.string "Oh! You have a {STR_VAR_1}!\p"
 	.string "I could trade you a {STR_VAR_2}\n"
 	.string "for it. Will that do?$"
 
-OldaleTown_PokemonCenter_1F_Text_WeaknessTrader_Done:
+OldaleTown_PokemonCenter_1F_Text_WeaknessTrader_Done::
 	.string "Enjoy your new {STR_VAR_2}!$"
 
-OldaleTown_PokemonCenter_1F_Text_WeaknessTrader_AlreadyDone:
+OldaleTown_PokemonCenter_1F_Text_WeaknessTrader_AlreadyDone::
 	.string "We already made a trade.\n"
 	.string "I hope your new POKéMON\l"
 	.string "is treating you well!$"
 
-OldaleTown_PokemonCenter_1F_Text_WeaknessTrader_NoMatch:
+OldaleTown_PokemonCenter_1F_Text_WeaknessTrader_NoMatch::
 	.string "Hmm... I don't have anything\n"
 	.string "that would suit you right now.$"
 
-OldaleTown_PokemonCenter_1F_Text_WeaknessTrader_Declined:
+OldaleTown_PokemonCenter_1F_Text_WeaknessTrader_Declined::
 	.string "No rush! Come back if you\n"
 	.string "change your mind.$"

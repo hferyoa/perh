@@ -8,6 +8,7 @@
 #include "constants/pokemon.h"
 #include "constants/abilities.h"
 #include "weakness_trade.h"
+#include "event_data.h"
 
 // ── Configuration ───────────────────────────────────────────────────────────
 // If TRUE, condition B requires that the lead has NO resisted (not very
